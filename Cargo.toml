@@ -1,0 +1,15 @@
+[package]
+edition = "2024"
+name = "t-wasm"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+embedded-hal = "1.0.0"
+embedded-alloc = "0.7"
+wasmi = { version = "1.0", default-features = false }
+
+[target."thumbv8m.main-none-eabihf".dependencies]
+rp235x-hal = { version = "0.3", features = ["rt", "critical-section-impl"] }
