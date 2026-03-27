@@ -1,4 +1,5 @@
-# Embedded WASM Blinky — WebAssembly Blinky on RP2350 Pico 2
+# Embedded WASM Blinky
+## WebAssembly Blinky on RP2350 Pico 2
 
 A pure Embedded Rust project that runs a **WebAssembly interpreter** directly on the RP2350 (Raspberry Pi Pico 2) bare-metal. A compiled WASM module controls the onboard LED — no operating system and no standard library.
 
