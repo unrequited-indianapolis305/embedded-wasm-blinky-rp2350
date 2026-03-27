@@ -9,11 +9,15 @@
 
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use wasmtime::{Config, Engine};
 
 /// Creates the output directory path and registers it for linker search.
+///
+/// # Returns
+///
+/// The output directory path as a `PathBuf`.
 ///
 /// # Panics
 ///
@@ -33,7 +37,7 @@ fn setup_output_dir() -> PathBuf {
 /// # Panics
 ///
 /// Panics if the file cannot be created or written.
-fn write_linker_script(out: &PathBuf) {
+fn write_linker_script(out: &Path) {
     let memory_x = include_bytes!("rp2350.x");
     let mut f = File::create(out.join("memory.x")).unwrap();
     f.write_all(memory_x).unwrap();
@@ -61,6 +65,10 @@ fn compile_wasm_app() {
 /// traps (bare-metal has no OS signal handlers) and no virtual-memory
 /// guard pages (embedded target with limited RAM).
 ///
+/// # Returns
+///
+/// A configured wasmtime `Engine` targeting the Pulley 32-bit interpreter.
+///
 /// # Panics
 ///
 /// Panics if the engine configuration fails.
@@ -86,7 +94,7 @@ fn create_pulley_engine() -> Engine {
 /// # Panics
 ///
 /// Panics if compilation or serialization fails.
-fn compile_wasm_to_pulley(out: &PathBuf) {
+fn compile_wasm_to_pulley(out: &Path) {
     let wasm_path = "wasm-app/target/wasm32-unknown-unknown/release/wasm_app.wasm";
     let wasm_bytes = std::fs::read(wasm_path).expect("read WASM binary");
     let engine = create_pulley_engine();

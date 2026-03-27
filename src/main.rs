@@ -14,12 +14,13 @@
 
 extern crate alloc;
 
+mod led;
 mod platform;
+mod uart;
 
 use alloc::boxed::Box;
 use core::panic::PanicInfo;
 use embedded_alloc::LlffHeap as Heap;
-use embedded_hal::digital::OutputPin;
 use rp235x_hal as hal;
 use wasmtime::{Caller, Config, Engine, Linker, Module, Store};
 
@@ -54,38 +55,30 @@ struct HostState {
     delay_ms: Box<dyn FnMut(u32)>,
 }
 
-/// SIO base address for direct GPIO register access in panic handler.
-const SIO_BASE: u32 = 0xd000_0000;
-
-/// Blinks the LED via direct SIO register writes using RP2350 offsets.
+/// Panic handler that outputs a diagnostic message over UART0.
 ///
-/// Used in the panic handler where HAL abstractions are unavailable.
-/// Performs `count` visible blinks on GPIO25 (250ms on, 250ms off at
-/// 150 MHz) followed by a 500ms pause.
-fn panic_blink(count: u32) {
-    const GPIO_OE_SET: *mut u32 = (SIO_BASE + 0x038) as *mut u32;
-    const GPIO_OUT_SET: *mut u32 = (SIO_BASE + 0x018) as *mut u32;
-    const GPIO_OUT_CLR: *mut u32 = (SIO_BASE + 0x020) as *mut u32;
-    unsafe {
-        core::ptr::write_volatile(GPIO_OE_SET, 1 << 25);
-    }
-    for _ in 0..count {
-        unsafe { core::ptr::write_volatile(GPIO_OUT_SET, 1 << 25) };
-        cortex_m::asm::delay(37_500_000);
-        unsafe { core::ptr::write_volatile(GPIO_OUT_CLR, 1 << 25) };
-        cortex_m::asm::delay(37_500_000);
-    }
-    cortex_m::asm::delay(75_000_000);
-}
-
-/// Panic handler that rapidly blinks the LED to signal a firmware crash.
+/// Initializes UART0 from scratch (in case it was never set up) and
+/// writes the panic location and message to UART0, then halts.
 ///
-/// Blinks GPIO25 in a continuous fast pattern so a panic is visually
-/// distinguishable from normal operation or a silent hang.
+/// # Arguments
+///
+/// * `info` - Panic information containing the location and message.
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    uart::panic_init();
+    uart::panic_write(b"\n!!! PANIC !!!\n");
+    if let Some(location) = info.location() {
+        uart::panic_write(b"Location: ");
+        uart::panic_write(location.file().as_bytes());
+        uart::panic_write(b"\n");
+    }
+    if let Some(msg) = info.message().as_str() {
+        uart::panic_write(b"Message: ");
+        uart::panic_write(msg.as_bytes());
+        uart::panic_write(b"\n");
+    }
     loop {
-        panic_blink(10);
+        cortex_m::asm::wfe();
     }
 }
 
@@ -111,6 +104,10 @@ fn init_heap() {
 /// * `pll_usb` - USB PLL peripheral.
 /// * `resets` - Resets peripheral for subsystem reset control.
 /// * `watchdog` - Watchdog timer used as the clock reference.
+///
+/// # Returns
+///
+/// The configured clocks manager for peripheral clock access.
 ///
 /// # Panics
 ///
@@ -138,19 +135,21 @@ fn init_clocks(
 
 /// Wraps hardware peripherals into boxed closures for the WASM host state.
 ///
-/// Delay is implemented via CPU cycle counting (`cortex_m::asm::delay`) at
-/// approximately 150 MHz, providing reliable timing without depending on
-/// the HAL timer peripheral.
+/// The LED closure writes "GPIO25 On\n" or "GPIO25 Off\n" to UART0
+/// each time the LED state changes. Delay is implemented via CPU cycle
+/// counting (`cortex_m::asm::delay`) at approximately 150 MHz.
 ///
-/// # Arguments
+/// # Returns
 ///
-/// * `led_pin` - GPIO pin configured as a push-pull output for the LED.
-fn build_host_state(mut led_pin: impl OutputPin + 'static) -> HostState {
+/// A `HostState` containing the LED control and delay closures.
+fn build_host_state() -> HostState {
     let set_led = Box::new(move |high: bool| {
         if high {
-            let _ = led_pin.set_high();
+            led::set_high();
+            uart::write_msg(b"GPIO25 On\n");
         } else {
-            let _ = led_pin.set_low();
+            led::set_low();
+            uart::write_msg(b"GPIO25 Off\n");
         }
     });
     let delay_ms = Box::new(move |ms: u32| {
@@ -161,8 +160,14 @@ fn build_host_state(mut led_pin: impl OutputPin + 'static) -> HostState {
 
 /// Initializes all RP2350 hardware and returns a configured host state.
 ///
-/// Sets up the watchdog, clocks, SIO, GPIO pins, and timer peripherals.
-/// GPIO25 is configured as a push-pull output for the onboard LED.
+/// Sets up the watchdog, clocks, SIO, GPIO pins, UART0, and timer
+/// peripherals. GPIO25 is configured as a push-pull output for the
+/// onboard LED. UART0 is configured at 115200 baud on GPIO0 (TX) and
+/// GPIO1 (RX) for diagnostic output.
+///
+/// # Returns
+///
+/// A `HostState` containing hardware-bound closures for the WASM runtime.
 ///
 /// # Panics
 ///
@@ -170,7 +175,7 @@ fn build_host_state(mut led_pin: impl OutputPin + 'static) -> HostState {
 fn init_hardware() -> HostState {
     let mut pac = hal::pac::Peripherals::take().unwrap();
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
-    let _clocks = init_clocks(
+    let clocks = init_clocks(
         pac.XOSC,
         pac.CLOCKS,
         pac.PLL_SYS,
@@ -185,7 +190,10 @@ fn init_hardware() -> HostState {
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
-    build_host_state(pins.gpio25.into_push_pull_output())
+    let (uart_dev, led_pin) = uart::init(pac.UART0, &mut pac.RESETS, &clocks, pins);
+    uart::store_global(uart_dev);
+    led::store_global(led_pin);
+    build_host_state()
 }
 
 /// Creates a wasmtime engine configured for Pulley on bare-metal.
@@ -195,6 +203,10 @@ fn init_hardware() -> HostState {
 /// runtime engines or `Module::deserialize` will fail. OS-dependent
 /// features are disabled and memory limits are tuned for the RP2350's
 /// 512 KiB RAM.
+///
+/// # Returns
+///
+/// A configured wasmtime `Engine` targeting the Pulley 32-bit interpreter.
 ///
 /// # Panics
 ///
@@ -300,6 +312,10 @@ fn register_delay_ms(linker: &mut Linker<HostState>) {
 ///
 /// * `engine` - WASM engine that the linker is associated with.
 ///
+/// # Returns
+///
+/// A configured `Linker` with GPIO and delay host functions registered.
+///
 /// # Panics
 ///
 /// Panics if any host function fails to register.
@@ -343,7 +359,9 @@ fn run_wasm(host_state: HostState) -> ! {
     let mut store = Store::new(&engine, host_state);
     let linker = build_linker(&engine);
     execute_wasm(&mut store, &linker, &module);
-    loop {}
+    loop {
+        cortex_m::asm::wfe();
+    }
 }
 
 /// Firmware entry point that initializes hardware and runs the WASM blinky.

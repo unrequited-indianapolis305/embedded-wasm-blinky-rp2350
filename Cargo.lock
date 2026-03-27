@@ -1099,8 +1099,11 @@ version = "0.1.0"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
+ "critical-section",
  "embedded-alloc",
  "embedded-hal 1.0.0",
+ "fugit",
+ "nb 1.1.0",
  "rp235x-hal",
  "wasmtime",
 ]

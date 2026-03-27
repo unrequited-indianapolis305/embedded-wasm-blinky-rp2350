@@ -29,7 +29,9 @@ unsafe extern "C" {
 /// Panic handler for the WASM environment that halts in an infinite loop.
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    loop {}
+    loop {
+        core::hint::spin_loop();
+    }
 }
 
 /// Calls the host function to set the LED GPIO pin high.
@@ -38,6 +40,10 @@ fn set_led_high() {
 }
 
 /// Calls the host function to delay execution for the given milliseconds.
+///
+/// # Arguments
+///
+/// * `ms` - Duration of the delay in milliseconds.
 fn delay(ms: u32) {
     delay_ms(ms);
 }
