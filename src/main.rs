@@ -1,4 +1,4 @@
-//! SPDX-License-Identifier: MIT OR Apache-2.0
+//! SPDX-License-Identifier: MIT
 //!
 //! Copyright (c) 2026 Kevin Thomas
 //!

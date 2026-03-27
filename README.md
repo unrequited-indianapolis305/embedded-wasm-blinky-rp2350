@@ -319,4 +319,4 @@ Rebuild and reflash — only the 191-byte WASM binary changes.
 
 ## License
 
-- [MIT License](LICENSE-MIT)
+- [MIT License](LICENSE)
