@@ -18,6 +18,7 @@ A pure Embedded Rust project that runs a **WebAssembly Component Model** runtime
 - [Memory Layout](#memory-layout)
 - [Extending the Project](#extending-the-project)
 - [Troubleshooting](#troubleshooting)
+- [Tutorial](#tutorial)
 - [License](#license)
 
 ## Overview
@@ -446,6 +447,10 @@ Rebuild and reflash — only the WASM component changes.
 | `picotool` can't find device                    | Not in bootloader mode                 | Hold BOOTSEL while plugging in USB                                               |
 | `cargo build` doesn't pick up WASM changes      | Cached build artifacts                 | Run `cargo clean && cargo build --release`                                       |
 | ComponentEncoder fails                          | wit-bindgen metadata missing           | Ensure wasm-app uses `wit-bindgen` with `macros` + `realloc` features            |
+
+## Tutorial
+
+A complete line-by-line code walkthrough is available in [TUTORIAL.md](TUTORIAL.md). It covers every Rust source file and every function in the project, written as a teaching resource for learning embedded WASM development from scratch.
 
 ## License
 
