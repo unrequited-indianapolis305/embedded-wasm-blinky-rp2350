@@ -1,6 +1,8 @@
 # Embedded WASM Blinky
 ## WebAssembly Component Model on RP2350 Pico 2
 
+> Part of the [embedded-wasm](https://github.com/mytechnotalent/embedded-wasm) collection — a set of repos that runs a WebAssembly Component Model runtime (wasmtime + Pulley interpreter) directly on the RP2350 bare-metal with hardware capabilities exposed through WIT.
+
 A pure Embedded Rust project that runs a **WebAssembly Component Model** runtime (wasmtime + Pulley interpreter) directly on the RP2350 (Raspberry Pi Pico 2) bare-metal. Hardware capabilities are exposed through typed **WIT** (WebAssembly Interface Type) definitions (`embedded:platform/gpio` and `embedded:platform/timing`), enabling hardware-agnostic guest programs that are AOT-compiled to Pulley bytecode and executed on the device to control the onboard LED — no operating system and no standard library.
 
 ## Table of Contents
