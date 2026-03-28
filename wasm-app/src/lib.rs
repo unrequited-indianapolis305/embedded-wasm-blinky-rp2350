@@ -11,16 +11,18 @@
 
 #![no_std]
 
+// Enable the global allocator for heap-backed collections.
 extern crate alloc;
 
-use core::panic::PanicInfo;
+use core::panic::PanicInfo; // Panic handler signature type.
 
 /// Global heap allocator required by the canonical ABI's `cabi_realloc`.
 #[global_allocator]
 static ALLOC: dlmalloc::GlobalDlmalloc = dlmalloc::GlobalDlmalloc;
 
-use embedded::platform::{gpio, timing};
+use embedded::platform::{gpio, timing}; // Host-provided GPIO and timing imports.
 
+// Generate guest-side bindings for the `blinky` WIT world.
 wit_bindgen::generate!({
     world: "blinky",
     path: "../wit",
@@ -29,6 +31,7 @@ wit_bindgen::generate!({
 /// WASM guest component implementing the `blinky` world.
 struct BlinkyApp;
 
+// Register `BlinkyApp` as the component's exported implementation.
 export!(BlinkyApp);
 
 impl Guest for BlinkyApp {

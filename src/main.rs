@@ -12,18 +12,23 @@
 #![no_std]
 #![no_main]
 
+// Enable the global allocator for heap-backed collections.
 extern crate alloc;
 
+/// LED GPIO control abstraction.
 mod led;
+/// WIT host-import implementations for GPIO and timing.
 mod platform;
+/// UART peripheral setup and I/O helpers.
 mod uart;
 
-use core::panic::PanicInfo;
-use embedded_alloc::LlffHeap as Heap;
-use rp235x_hal as hal;
-use wasmtime::component::{Component, HasSelf};
-use wasmtime::{Config, Engine, Store};
+use core::panic::PanicInfo; // Panic handler signature type.
+use embedded_alloc::LlffHeap as Heap; // Linked-list first-fit heap allocator.
+use rp235x_hal as hal; // RP2350 HAL shorthand.
+use wasmtime::component::{Component, HasSelf}; // Component Model loader and linker traits.
+use wasmtime::{Config, Engine, Store}; // Wasmtime runtime core types.
 
+// Generate host-side bindings for the `blinky` WIT world.
 wasmtime::component::bindgen!({
     world: "blinky",
     path: "wit",
