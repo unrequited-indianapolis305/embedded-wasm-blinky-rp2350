@@ -1,9 +1,9 @@
 # Embedded WASM Blinky
 ## WebAssembly Component Model on RP2350 Pico 2
 
-> Part of the [embedded-wasm](https://github.com/mytechnotalent/embedded-wasm) collection — a set of repos that runs a WebAssembly Component Model runtime (wasmtime + Pulley interpreter) directly on the RP2350 bare-metal with hardware capabilities exposed through WIT.
+> Part of the [embedded-wasm](https://github.com/mytechnotalent/embedded-wasm) collection — a set of repos that runs a WebAssembly Component Model runtime (Wasmtime + Pulley interpreter) directly on the RP2350 bare-metal with hardware capabilities exposed through WIT.
 
-A pure Embedded Rust project that runs a **WebAssembly Component Model** runtime (wasmtime + Pulley interpreter) directly on the RP2350 (Raspberry Pi Pico 2) bare-metal. Hardware capabilities are exposed through typed **WIT** (WebAssembly Interface Type) definitions (`embedded:platform/gpio` and `embedded:platform/timing`), enabling hardware-agnostic guest programs that are AOT-compiled to Pulley bytecode and executed on the device to control the onboard LED — no operating system and no standard library.
+A pure Embedded Rust project that runs a **WebAssembly Component Model** runtime (Wasmtime + Pulley interpreter) directly on the RP2350 (Raspberry Pi Pico 2) bare-metal. Hardware capabilities are exposed through typed **WIT** (WebAssembly Interface Type) definitions (`embedded:platform/gpio` and `embedded:platform/timing`), enabling hardware-agnostic guest programs that are AOT-compiled to Pulley bytecode and executed on the device to control the onboard LED — no operating system and no standard library.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ A pure Embedded Rust project that runs a **WebAssembly Component Model** runtime
 
 ## Overview
 
-This project demonstrates that WebAssembly is not just for browsers — it can run on a microcontroller with 512 KB of RAM. The firmware uses [wasmtime](https://github.com/bytecodealliance/wasmtime) with the **Pulley interpreter** (a portable, `no_std`-compatible WebAssembly runtime) and the **WebAssembly Component Model** to execute a precompiled WASM component that blinks GPIO25 at 500ms intervals.
+This project demonstrates that WebAssembly is not just for browsers — it can run on a microcontroller with 512 KB of RAM. The firmware uses [Wasmtime](https://github.com/bytecodealliance/Wasmtime) with the **Pulley interpreter** (a portable, `no_std`-compatible WebAssembly runtime) and the **WebAssembly Component Model** to execute a precompiled WASM component that blinks GPIO25 at 500ms intervals.
 
 **Key properties:**
 
@@ -33,7 +33,7 @@ This project demonstrates that WebAssembly is not just for browsers — it can r
 - **Pure Rust** — zero C code, zero C bindings, zero FFI
 - **Minimal unsafe** — only unavoidable sites (heap init, boot metadata, component deserialize, panic handler UART)
 - **AOT compilation** — WASM is compiled to Pulley bytecode on the host, no compilation on device
-- **Industry-standard runtime** — wasmtime is the reference WebAssembly implementation
+- **Industry-standard runtime** — Wasmtime is the reference WebAssembly implementation
 - **UART diagnostics** — LED state changes are logged to UART0, panics output file/message over serial
 
 ## Architecture
@@ -46,7 +46,7 @@ This project demonstrates that WebAssembly is not just for browsers — it can r
 │  │            Firmware (src/main.rs)             │    │
 │  │                                               │    │
 │  │  ┌─────────┐  ┌────────┐  ┌───────────┐       │    │
-│  │  │  Heap   │  │wasmtime│  │ WIT Host  │       │    │
+│  │  │  Heap   │  │Wasmtime│  │ WIT Host  │       │    │
 │  │  │ 256 KiB │  │ Pulley │  │ Trait Impl│       │    │
 │  │  └─────────┘  └───┬────┘  └─────┬─────┘       │    │
 │  │                   │             │             │    │
@@ -93,10 +93,10 @@ embedded-wasm-blinky/
 │   └── tests/
 │       └── integration.rs # 19 tests: component loading, WIT, blink, fuel, pin, size
 ├── src/
-│   ├── main.rs            # Firmware: hardware init, wasmtime runtime, WIT Host impls
+│   ├── main.rs            # Firmware: hardware init, Wasmtime runtime, WIT Host impls
 │   ├── led.rs             # GPIO output driver — multi-pin, keyed by pin number
 │   ├── uart.rs            # UART0 driver (shared plug-and-play module)
-│   └── platform.rs        # Platform TLS glue for wasmtime no_std
+│   └── platform.rs        # Platform TLS glue for Wasmtime no_std
 ├── build.rs               # Compiles WASM app, ComponentEncoder, AOT Pulley bytecode
 ├── Cargo.toml             # Firmware dependencies
 ├── rp2350.x               # RP2350 memory layout linker script
@@ -116,19 +116,19 @@ The WASM component compiled to `wasm32-unknown-unknown`. Uses `wit-bindgen` to g
 
 ### `src/main.rs` — Firmware Entry Point
 
-Orchestrates everything: initializes the heap (256 KiB), clocks, and hardware peripherals, then boots the wasmtime Pulley engine. Uses `wasmtime::component::bindgen!()` to generate host-side WIT traits, implements `gpio::Host` and `timing::Host` on `HostState`, deserializes the embedded `.cwasm` bytecode as a `Component`, and calls the exported `run()` function. The panic handler uses `uart::panic_init()` and `uart::panic_write()` to output diagnostics over UART0.
+Orchestrates everything: initializes the heap (256 KiB), clocks, and hardware peripherals, then boots the Wasmtime Pulley engine. Uses `wasmtime::component::bindgen!()` to generate host-side WIT traits, implements `gpio::Host` and `timing::Host` on `HostState`, deserializes the embedded `.cwasm` bytecode as a `Component`, and calls the exported `run()` function. The panic handler uses `uart::panic_init()` and `uart::panic_write()` to output diagnostics over UART0.
 
 ### `src/led.rs` — GPIO Output Driver (Shared Module)
 
-Controls any number of GPIO output pins via a `critical_section::Mutex<RefCell<BTreeMap>>`. Pins are stored by their hardware GPIO number so WASM code can address them directly (e.g., `gpio::set_high(25)`). `led::store_pin(25, pin)` registers a pin, `led::set_high(25)` / `led::set_low(25)` toggles it. Accepts any type implementing `embedded_hal::digital::OutputPin` — no dependency on `rp235x-hal`. Marked `#![allow(dead_code)]` — shared plug-and-play module.
+Controls any number of GPIO output pins via a `critical_section::Mutex<RefCell<BTreeMap>>`. Pins are stored by their hardware GPIO number so WASM code can address them directly (e.g., `gpio::set_high(25)`). The `led::store_pin(25, pin)` registers a pin, `led::set_high(25)` / `led::set_low(25)` toggles it. Accepts any type implementing `embedded_hal::digital::OutputPin` — no dependency on `rp235x-hal`. Marked `#![allow(dead_code)]` — shared plug-and-play module.
 
 ### `src/uart.rs` — UART0 Driver (Shared Module)
 
-Provides both HAL-based and raw-register UART0 access. `uart::init()` accepts only the GPIO0 (TX) and GPIO1 (RX) pins and configures UART0 at 115200 baud, returning just the UART peripheral. Callers retain ownership of all other pins. `uart::store_global()` stores the UART in a `critical_section::Mutex`. HAL functions: `write_msg()`, `read_byte()`, `write_byte()`. Panic functions (raw registers, no HAL): `panic_init()`, `panic_write()`. Marked `#![allow(dead_code)]` — shared module, identical across repos.
+Provides both HAL-based and raw-register UART0 access. The `uart::init()` accepts only the GPIO0 (TX) and GPIO1 (RX) pins and configures UART0 at 115200 baud, returning just the UART peripheral. Callers retain ownership of all other pins. The `uart::store_global()` stores the UART in a `critical_section::Mutex`. HAL functions: `write_msg()`, `read_byte()`, `write_byte()`. Panic functions (raw registers, no HAL): `panic_init()`, `panic_write()`. Marked `#![allow(dead_code)]` — shared module, identical across repos.
 
-### `src/platform.rs` — wasmtime TLS Glue
+### `src/platform.rs` — Wasmtime TLS Glue
 
-Implements `wasmtime_tls_get()` and `wasmtime_tls_set()` using a global `AtomicPtr`. Required by wasmtime on `no_std` platforms. On this single-threaded MCU, TLS is just a single atomic pointer.
+Implements `wasmtime_tls_get()` and `wasmtime_tls_set()` using a global `AtomicPtr`. Required by Wasmtime on `no_std` platforms. On this single-threaded MCU, TLS is just a single atomic pointer.
 
 ### `build.rs` — AOT Build Script
 
@@ -225,7 +225,7 @@ This produces an ELF at `target/thumbv8m.main-none-eabihf/debuggable/embedded-wa
 
 ### Variables Panel
 
-> **Warning:** Do **NOT** expand the **Static** dropdown in the Variables panel. It attempts to enumerate every static variable in the binary — including thousands from wasmtime internals — over the SWD link, causing an infinite spin. Use the **Locals** and **Registers** dropdowns instead.
+> **Warning:** Do **NOT** expand the **Static** dropdown in the Variables panel. It attempts to enumerate every static variable in the binary — including thousands from Wasmtime internals — over the SWD link, causing an infinite spin. Use the **Locals** and **Registers** dropdowns instead.
 
 ## Testing
 
@@ -291,7 +291,7 @@ No `unsafe`, no register addresses, no HAL — just typed function calls.
 
 The firmware boots in this sequence:
 
-1. **`init_heap()`** — 256 KiB heap for wasmtime via `embedded-alloc`.
+1. **`init_heap()`** — 256 KiB heap for Wasmtime via `embedded-alloc`.
 2. **`init_hardware()`** — Clocks, SIO, GPIO, UART0, LED:
    - `uart::init(gpio0, gpio1)` → configures UART0 at 115200 baud (takes only TX/RX pins)
    - `uart::store_global()` → stores UART in mutex
@@ -310,7 +310,7 @@ The firmware boots in this sequence:
 ```
 WASM run()
   → gpio::set_high(25)                     [WIT interface call]
-    → component model dispatch             [wasmtime canonical ABI]
+    → component model dispatch             [Wasmtime canonical ABI]
       → HostState::set_high(pin: 25)       [gpio::Host trait impl]
         → led::set_high(25)                [led.rs — HAL pin.set_high()]
         → uart::write_msg("GPIO25 On\n")   [uart.rs — serial output]
@@ -378,7 +378,7 @@ Critical detail: `CARGO_ENCODED_RUSTFLAGS` (ARM flags like `--nmagic`, `-Tlink.x
 | ------------------ | ------------ | --------------- | -------------------------------------------------- |
 | Flash              | `0x10000000` | 2 MiB           | Firmware code + embedded WASM component            |
 | RAM (striped)      | `0x20000000` | 512 KiB         | Stack + heap + data                                |
-| Heap (allocated)   | —            | 256 KiB         | wasmtime engine, store, component, WASM linear mem |
+| Heap (allocated)   | —            | 256 KiB         | Wasmtime engine, store, component, WASM linear mem |
 | WASM linear memory | —            | 64 KiB (1 page) | WASM component's addressable memory                |
 | WASM stack         | —            | 4 KiB           | WASM call stack                                    |
 

@@ -31,7 +31,7 @@ interface gpio {
 }
 ```
 
-The `gpio` interface defines two functions. `set-high` takes a pin number and turns it on. `set-low` takes a pin number and turns it off. The pin number is a `u32` because WIT's type system maps cleanly to WASM's 32-bit integer type. These are **imports** — the guest calls them, and the host provides the implementations.
+The `gpio` interface defines two functions. The `set-high` takes a pin number and turns it on. The `set-low` takes a pin number and turns it off. The pin number is a `u32` because WIT's type system maps cleanly to WASM's 32-bit integer type. These are **imports** — the guest calls them, and the host provides the implementations.
 
 ```wit
 interface timing {
@@ -72,7 +72,7 @@ use core::ptr;
 use core::sync::atomic::{AtomicPtr, Ordering};
 ```
 
-`ptr` provides `null_mut()` for initializing the TLS value. `AtomicPtr` is an atomic pointer type that can be read and written from any context without data races. On a single-core Cortex-M33, atomics are not strictly necessary, but they satisfy Rust's type system and make the code correct by construction.
+The `ptr` provides `null_mut()` for initializing the TLS value. `AtomicPtr` is an atomic pointer type that can be read and written from any context without data races. On a single-core Cortex-M33, atomics are not strictly necessary, but they satisfy Rust's type system and make the code correct by construction.
 
 ### The TLS Variable
 
@@ -91,7 +91,7 @@ pub extern "C" fn wasmtime_tls_get() -> *mut u8 {
 }
 ```
 
-Wasmtime calls this symbol by name to retrieve the current thread's TLS pointer. The `#[unsafe(no_mangle)]` attribute (Rust 2024 syntax) prevents the compiler from mangling the function name, so Wasmtime's linker can find it. `extern "C"` uses the C calling convention. `Ordering::Relaxed` is sufficient because there is only one thread — no ordering guarantees are needed relative to other threads.
+Wasmtime calls this symbol by name to retrieve the current thread's TLS pointer. The `#[unsafe(no_mangle)]` attribute (Rust 2024 syntax) prevents the compiler from mangling the function name, so Wasmtime's linker can find it. The `extern "C"` uses the C calling convention. `Ordering::Relaxed` is sufficient because there is only one thread — no ordering guarantees are needed relative to other threads.
 
 ### `wasmtime_tls_set`
 
@@ -129,7 +129,7 @@ use nb::block;
 use rp235x_hal as hal;
 ```
 
-`RefCell` provides interior mutability — the ability to borrow the UART peripheral mutably at runtime even though it lives in a static. `Mutex` from the `critical_section` crate is a bare-metal mutex that disables interrupts to prevent data races. `HertzU32` is a typed frequency value that prevents unit confusion. `Clock` is a trait for reading peripheral clock frequencies. `block!` converts non-blocking operations into blocking ones by spinning. `hal` is the RP2350 hardware abstraction layer.
+`RefCell` provides interior mutability — the ability to borrow the UART peripheral mutably at runtime even though it lives in a static. `Mutex` from the `critical_section` crate is a bare-metal mutex that disables interrupts to prevent data races. `HertzU32` is a typed frequency value that prevents unit confusion. `Clock` is a trait for reading peripheral clock frequencies. The `nb::block` import brings the `block!` macro into scope, which converts non-blocking operations into blocking ones by spinning. The `hal` alias maps to the RP2350 hardware abstraction layer.
 
 ### Constants
 
@@ -185,7 +185,7 @@ The pins arrive in their default state (`FunctionNull`, `PullDown`) and are reco
     );
 ```
 
-`reconfigure` is a zero-cost type-level state transition. It configures the hardware registers and returns a new type that proves the pin is now in UART mode.
+The `reconfigure` is a zero-cost type-level state transition. It configures the hardware registers and returns a new type that proves the pin is now in UART mode.
 
 ```rust
     hal::uart::UartPeripheral::new(uart0, uart_pins, resets)
@@ -214,7 +214,7 @@ pub fn store_global(uart: Uart0) {
 }
 ```
 
-After `init` returns the configured UART, the caller stores it in the global mutex so that any code (including the GPIO state logger) can write to UART0. `critical_section::with` disables interrupts for the duration of the closure, acquires the mutex, and calls `replace(Some(uart))` to store the peripheral.
+After `init` returns the configured UART, the caller stores it in the global mutex so that any code (including the GPIO state logger) can write to UART0. The `critical_section::with` disables interrupts for the duration of the closure, acquires the mutex, and calls `replace(Some(uart))` to store the peripheral.
 
 ### `write_msg`
 
@@ -423,7 +423,7 @@ This is the largest file and the heart of the firmware. It initializes hardware,
 #![no_main]
 ```
 
-`no_std` means no standard library — only `core` and `alloc`. `no_main` means there is no standard `fn main()` — the entry point is provided by `cortex-m-rt` via the `#[hal::entry]` attribute.
+The `no_std` means no standard library — only `core` and `alloc`. The `no_main` means there is no standard `fn main()` — the entry point is provided by `cortex-m-rt` via the `#[hal::entry]` attribute.
 
 ```rust
 extern crate alloc;
@@ -449,7 +449,7 @@ use wasmtime::component::{Component, HasSelf};
 use wasmtime::{Config, Engine, Store};
 ```
 
-`PanicInfo` is the type passed to the panic handler. `LlffHeap` is a linked-list first-fit heap allocator designed for embedded systems. `hal` is the RP2350 hardware abstraction layer. The Wasmtime imports bring in the Component Model's core types: `Component` (a precompiled WASM module), `Engine` (the execution environment), `Store` (per-instance state), and `HasSelf` (a marker type used for linker registration).
+`PanicInfo` is the type passed to the panic handler. `LlffHeap` is a linked-list first-fit heap allocator designed for embedded systems. The `hal` is the RP2350 hardware abstraction layer. The Wasmtime imports bring in the Component Model's core types: `Component` (a precompiled WASM module), `Engine` (the execution environment), `Store` (per-instance state), and `HasSelf` (a marker type used for linker registration).
 
 ### WIT Bindings Generation
 
@@ -492,7 +492,7 @@ const WASM_BINARY: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/blinky.cwas
 pub static IMAGE_DEF: hal::block::ImageDef = hal::block::ImageDef::secure_exe();
 ```
 
-The RP2350's boot ROM looks for metadata in a special `.start_block` section to determine how to boot. `secure_exe()` tells the boot ROM this is a secure ARM executable. The `#[used]` attribute prevents the linker from stripping this symbol even though nothing references it in code. `#[unsafe(link_section)]` is the Rust 2024 syntax for placing data in a specific linker section.
+The RP2350's boot ROM looks for metadata in a special `.start_block` section to determine how to boot. The `secure_exe()` tells the boot ROM this is a secure ARM executable. The `#[used]` attribute prevents the linker from stripping this symbol even though nothing references it in code. `#[unsafe(link_section)]` is the Rust 2024 syntax for placing data in a specific linker section.
 
 ### Host State and WIT Implementations
 
@@ -526,7 +526,7 @@ impl embedded::platform::timing::Host for HostState {
 }
 ```
 
-The WIT `timing` interface implementation. `cortex_m::asm::delay` is a tight loop that counts CPU cycles. At 150 MHz (the RP2350's default PLL frequency), `150_000` cycles equals 1 millisecond. This is more reliable than timer-based delays on bare metal because it has no dependencies on timer peripheral configuration.
+The WIT `timing` interface implementation. The `cortex_m::asm::delay` is a tight loop that counts CPU cycles. At 150 MHz (the RP2350's default PLL frequency), `150_000` cycles equals 1 millisecond. This is more reliable than timer-based delays on bare metal because it has no dependencies on timer peripheral configuration.
 
 ### Panic Handler
 
@@ -719,7 +719,7 @@ fn execute_wasm(
 }
 ```
 
-Instantiates the WASM component and calls the exported `run` function. `Blinky::instantiate` creates a live instance of the component with all imports resolved. `call_run` invokes the guest's `run` function, which enters the infinite blink loop. This function only returns if the WASM guest's `run` function returns — which in this project it never does.
+Instantiates the WASM component and calls the exported `run` function. `Blinky::instantiate` creates a live instance of the component with all imports resolved. The `call_run` invokes the guest's `run` function, which enters the infinite blink loop. This function only returns if the WASM guest's `run` function returns — which in this project it never does.
 
 ### `run_wasm`
 
@@ -918,7 +918,7 @@ Enables heap allocation. The canonical ABI (the calling convention between host 
 static ALLOC: dlmalloc::GlobalDlmalloc = dlmalloc::GlobalDlmalloc;
 ```
 
-`dlmalloc` is a port of Doug Lea's malloc to Rust. It is the only allocator that works with `wasm32-unknown-unknown` in `no_std` because it implements its own `sbrk` by growing the WASM linear memory. The `global` feature flag makes it a `#[global_allocator]`.
+The `dlmalloc` is a port of Doug Lea's malloc to Rust. It is the only allocator that works with `wasm32-unknown-unknown` in `no_std` because it implements its own `sbrk` by growing the WASM linear memory. The `global` feature flag makes it a `#[global_allocator]`.
 
 ### Imports and Bindings
 
