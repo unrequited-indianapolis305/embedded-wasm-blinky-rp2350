@@ -11,14 +11,15 @@
 
 #![allow(dead_code)]
 
+// Enable the global allocator for heap-backed collections.
 extern crate alloc;
 
-use alloc::boxed::Box;
-use alloc::collections::BTreeMap;
-use core::cell::RefCell;
-use core::convert::Infallible;
-use critical_section::Mutex;
-use embedded_hal::digital::OutputPin;
+use alloc::boxed::Box; // Heap-allocated trait objects for type-erased pins.
+use alloc::collections::BTreeMap; // Sorted map keyed by GPIO pin number.
+use core::cell::RefCell; // Interior mutability for the pin map.
+use core::convert::Infallible; // Error type for infallible GPIO operations.
+use critical_section::Mutex; // Interrupt-safe mutex for bare-metal concurrency.
+use embedded_hal::digital::OutputPin; // Hardware abstraction trait for GPIO output.
 
 /// Type alias for a boxed GPIO output pin trait object.
 type PinBox = Box<dyn OutputPin<Error = Infallible> + Send>;
