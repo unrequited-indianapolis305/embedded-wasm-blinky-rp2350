@@ -57,14 +57,6 @@ A **world** is a complete contract. The `blinky` world says: "I need `gpio` and 
 
 Wasmtime was originally built for desktop operating systems that provide thread-local storage (TLS) through the OS. On a bare-metal microcontroller, there is no OS, so we must provide TLS ourselves. This file is the simplest in the project — two functions and one static variable.
 
-### Module Header
-
-```rust
-#![no_std]
-```
-
-This file is part of a `no_std` crate, meaning it does not link against the Rust standard library. Only `core` (the language primitives) is available.
-
 ### Imports
 
 ```rust
