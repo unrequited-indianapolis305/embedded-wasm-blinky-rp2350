@@ -2,7 +2,7 @@
 //!
 //! Copyright (c) 2026 Kevin Thomas
 //!
-//! # WASM Blinky Component
+//! # Wasm Blinky Component
 //!
 //! A minimal WebAssembly component that blinks the onboard LED on an RP2350
 //! Pico 2 by calling host-provided GPIO and delay functions through typed
@@ -28,7 +28,7 @@ wit_bindgen::generate!({
     path: "../wit",
 });
 
-/// WASM guest component implementing the `blinky` world.
+/// Wasm guest component implementing the `blinky` world.
 struct BlinkyApp;
 
 // Register `BlinkyApp` as the component's exported implementation.
@@ -48,11 +48,11 @@ impl Guest for BlinkyApp {
     }
 }
 
-/// Panic handler for the WASM environment that halts in an infinite loop.
+/// Panic handler for the Wasm environment that halts in an infinite loop.
 ///
 /// # Arguments
 ///
-/// * `_info` - Panic information (unused in the WASM environment).
+/// * `_info` - Panic information (unused in the Wasm environment).
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {

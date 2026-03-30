@@ -2,9 +2,9 @@
 //!
 //! Copyright (c) 2026 Kevin Thomas
 //!
-//! # Integration Tests for WASM Blinky Component
+//! # Integration Tests for Wasm Blinky Component
 //!
-//! Validates that the compiled WASM component loads correctly through the
+//! Validates that the compiled Wasm component loads correctly through the
 //! Component Model, implements the expected WIT interfaces
 //! (`embedded:platform/gpio` and `embedded:platform/timing`), exports the
 //! `run` function, and calls host functions in the proper blink sequence
@@ -18,10 +18,10 @@ wasmtime::component::bindgen!({
     path: "../wit",
 });
 
-/// Compiled WASM blinky component embedded at build time.
+/// Compiled Wasm blinky component embedded at build time.
 const WASM_BINARY: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/blinky.wasm"));
 
-/// Represents a single host function call recorded during WASM execution.
+/// Represents a single host function call recorded during Wasm execution.
 #[derive(Debug, PartialEq)]
 enum HostCall {
     /// The `gpio.set-high` WIT function was called with the given pin.
@@ -32,7 +32,7 @@ enum HostCall {
     DelayMs(u32),
 }
 
-/// Host state that records all function calls made by the WASM guest.
+/// Host state that records all function calls made by the Wasm guest.
 struct TestHostState {
     /// Ordered log of every host function call.
     calls: Vec<HostCall>,
@@ -43,7 +43,7 @@ impl embedded::platform::gpio::Host for TestHostState {
     ///
     /// # Arguments
     ///
-    /// * `pin` - GPIO pin number passed by the WASM guest.
+    /// * `pin` - GPIO pin number passed by the Wasm guest.
     fn set_high(&mut self, pin: u32) {
         self.calls.push(HostCall::GpioSetHigh(pin));
     }
@@ -52,7 +52,7 @@ impl embedded::platform::gpio::Host for TestHostState {
     ///
     /// # Arguments
     ///
-    /// * `pin` - GPIO pin number passed by the WASM guest.
+    /// * `pin` - GPIO pin number passed by the Wasm guest.
     fn set_low(&mut self, pin: u32) {
         self.calls.push(HostCall::GpioSetLow(pin));
     }
@@ -63,7 +63,7 @@ impl embedded::platform::timing::Host for TestHostState {
     ///
     /// # Arguments
     ///
-    /// * `ms` - Delay duration in milliseconds passed by the WASM guest.
+    /// * `ms` - Delay duration in milliseconds passed by the Wasm guest.
     fn delay_ms(&mut self, ms: u32) {
         self.calls.push(HostCall::DelayMs(ms));
     }
@@ -93,7 +93,7 @@ fn create_default_engine() -> Engine {
     Engine::default()
 }
 
-/// Compiles the embedded WASM binary into a wasmtime component.
+/// Compiles the embedded Wasm binary into a wasmtime component.
 ///
 /// # Arguments
 ///
@@ -101,13 +101,13 @@ fn create_default_engine() -> Engine {
 ///
 /// # Returns
 ///
-/// The compiled WASM `Component`.
+/// The compiled Wasm `Component`.
 ///
 /// # Panics
 ///
-/// Panics if the WASM binary is invalid.
+/// Panics if the Wasm binary is invalid.
 fn compile_component(engine: &Engine) -> Component {
-    Component::new(engine, WASM_BINARY).expect("valid WASM component")
+    Component::new(engine, WASM_BINARY).expect("valid Wasm component")
 }
 
 /// Builds a fully configured test linker with all WIT interfaces registered.
@@ -153,13 +153,13 @@ fn create_fueled_store(engine: &Engine, fuel: u64) -> Store<TestHostState> {
     store
 }
 
-/// Runs the WASM `run` function until fuel is exhausted.
+/// Runs the Wasm `run` function until fuel is exhausted.
 ///
 /// # Arguments
 ///
 /// * `store` - The wasmtime store with fuel and host state.
 /// * `linker` - The component linker with WIT interfaces registered.
-/// * `component` - The compiled WASM component.
+/// * `component` - The compiled Wasm component.
 ///
 /// # Panics
 ///
@@ -174,11 +174,11 @@ fn run_until_out_of_fuel(
     let _ = blinky.call_run(&mut *store);
 }
 
-/// Verifies that the WASM component binary loads without error.
+/// Verifies that the Wasm component binary loads without error.
 ///
 /// # Panics
 ///
-/// Panics if the WASM component binary fails to compile.
+/// Panics if the Wasm component binary fails to compile.
 #[test]
 fn test_wasm_component_loads() {
     let engine = create_default_engine();
@@ -407,7 +407,7 @@ fn test_equal_high_low_calls() {
     assert_eq!(highs, lows, "set_high and set_low must be called equally");
 }
 
-/// Verifies that the WASM component binary is under 16 KB.
+/// Verifies that the Wasm component binary is under 16 KB.
 ///
 /// # Panics
 ///
@@ -416,7 +416,7 @@ fn test_equal_high_low_calls() {
 fn test_wasm_component_size_under_16kb() {
     assert!(
         WASM_BINARY.len() < 16_384,
-        "WASM component must be under 16 KB, got {} bytes",
+        "Wasm component must be under 16 KB, got {} bytes",
         WASM_BINARY.len()
     );
 }
